@@ -26,6 +26,12 @@ PRESS PLAY IN GAZEBO ONLY WHEN EVERYTHING IS LOADED (wait for controllers)
 You can run a walk demo with:
 
     rosrun phantomx_gazebo walker_demo.py
+    
+The LIDAR can be tuned to move to more specific angles and rates, but the basic sweep code to move the LIDAR up an down can be run with:
+    
+    rosrun phantomx_gazebo lidar_sweep_node.py
+    
+By default, the simulation laucnher will run the lidar_sweep_node.
 
 ## ROS API
 
@@ -34,10 +40,12 @@ All topics are provided in the /phantomx namespace.
 Sensors:
 
     /phantomx/joint_states
+    /phantomx/LaserScan
 
 Actuators (radians for position control, arbitrary normalized speed for cmd_vel):
 
     /phantomx/cmd_vel
+    /phantomx/hokuyo_tilt_position_controller/command
     /phantomx/j_c1_lf_position_controller/command
     /phantomx/j_c1_lm_position_controller/command
     /phantomx/j_c1_lr_position_controller/command
@@ -78,7 +86,14 @@ phantomx.set_walk_velocity(0,0,0) # Stop
 
 The following ROS packages have to be installed:
 * gazebo_ros_control
+* libgazebo_ros_laser 
+
+## Troubleshooting
+If the simulation is not moving correctly, try adding the following line before running the simulation:
+
+    export LIBGL_ALWAYS_SOFTWARE=1
 
 ## License
 
-This software is provided by Génération Robots http://www.generationrobots.com and HumaRobotics http://www.humarobotics.com under the Simplified BSD license
+This software is originally provided by Génération Robots http://www.generationrobots.com and HumaRobotics http://www.humarobotics.com under the Simplified BSD license
+This software has been modified by Nathan Boyd
