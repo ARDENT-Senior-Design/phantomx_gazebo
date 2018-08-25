@@ -12,8 +12,8 @@ These have been tested in simulation and need some work to be used on the real r
 
 Clone in your catkin workspace and catkin_make it.
 Make sure you also have the following packages in your workspace
-* phantomx_description: https://github.com/HumaRobotics/phantomx_description
-* phantomx_control: https://github.com/HumaRobotics/phantomx_control
+* phantomx_description: https://github.com/ARDENT-Senior-Design/phantomx_description
+* phantomx_control: https://github.com/ARDENT-Senior-Design/phantomx_control
     
 ## Usage
 
