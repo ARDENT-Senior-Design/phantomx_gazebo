@@ -39,7 +39,7 @@ In order for the robot to appear in RVIZ, the following settings need to be chan
     General Options:
         Fixed Frame -> base_link
 
-The LaserScan topic can be added by subscribing to the /phantomx/LaserScan topic listed below.
+The LaserScan topic can be added by pressing the "add" button and selecting "LaserScan". Then set it to subscrbe to the /phantomx/LaserScan topic listed below.
 
 ## ROS API
 
