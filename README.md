@@ -7,7 +7,6 @@ These have been tested in simulation and need some work to be used on the real r
 
 ![Phantom X model in Gazebo](/phantomx.png?raw=true "Phantom X model in Gazebo")
 
-
 ## Install
 
 Clone in your catkin workspace and catkin_make it.
@@ -32,6 +31,15 @@ The LIDAR can be tuned to move to more specific angles and rates, but the basic 
     rosrun phantomx_gazebo lidar_sweep_node.py
     
 By default, the simulation laucnher will run the lidar_sweep_node.
+
+## RVIZ
+
+In order for the robot to appear in RVIZ, the following settings need to be changed:
+
+    General Options:
+        Fixed Frame -> base_link
+
+The LaserScan topic can be added by subscribing to the /phantomx/LaserScan topic listed below.
 
 ## ROS API
 
