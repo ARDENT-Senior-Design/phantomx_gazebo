@@ -11,7 +11,7 @@ jleg = ['j_c1', 'j_thigh', 'j_tibia']
 suffix = ['f', 'm', 'r']
 sides = ['l', 'r']
 joints = []
-for j in jleg:
+for j in jleg:  #fill up joint information for whole robot body
     for s in suffix:
         for side in sides:
             z = j + "_" + side + s
@@ -22,6 +22,9 @@ phantomx_joints = joints
 
 class WJFunc:
     """Walk Joint Function"""
+    '''
+    Handles the detailed information of the Walking Gait function. Gait Phase (which legs are moving), mirroring of legs, and positioning info
+    '''
     def __init__(self):
         self.offset = 0
         self.scale = 1
@@ -29,11 +32,17 @@ class WJFunc:
         self.in_scale = 1
 
     def get(self, x):
-        """x between 0 and 1"""
+        '''
+        Input: x (scaling factor) between 0 and 1
+        Return: offset angle + scaled inches offset
+        '''
         f = math.sin(self.in_offset + self.in_scale * x)
-        return self.offset + self.scale * f
+        return self.offset + self.scale * f 
 
     def clone(self):
+        '''
+        WJFunc Getter. Get clone of the current joint configuration
+        '''
         z = WJFunc()
         z.offset = self.offset
         z.scale = self.scale
@@ -42,21 +51,29 @@ class WJFunc:
         return z
 
     def mirror(self):
+        '''
+        Mirrors the logic of the leg offset for the otherside of the robot
+        '''
         z = self.clone()
         z.offset *= -1
         z.scale *= -1
         return z
 
     def __str__(self):
+        '''
+        Print the format for the positioning
+        '''
         return 'y = {} + {} * sin({} + {} * x)'.format(
             self.offset, self.scale, self.in_offset, self.in_scale)
 
 
 class WFunc:
-    """Walk Function"""
+    '''
+    Makes sure the walking swing and stride motion is moving at the correct velocity and at the right angle
+    '''
     def __init__(self, **kwargs):
         self.parameters = {}
-
+        #set the scale at which velocities are treated
         self.parameters['swing_scale'] = 1
         self.parameters['vx_scale'] = 0.5
         self.parameters['vy_scale'] = 0.5
@@ -65,37 +82,44 @@ class WFunc:
         for k, v in kwargs.items():
             self.parameters[k] = v
 
-        self.joints = phantomx_joints
+        self.joints = phantomx_joints   #duplicate of the phantomx class joints
         self.generate()
 
     def generate(self):
+        '''
+        Set the Tripod Gait Phases
+        '''
         # f1=THIGH1=ANKLE1=L=R in phase
         self.pfn = {}  # phase joint functions
         self.afn = {}  # anti phase joint functions
 
-        f1 = WJFunc()
+        f1 = WJFunc()   #Thigh phase joint function function
         f1.in_scale = math.pi
         f1.scale = -self.parameters['swing_scale']
 
-        f2 = f1.clone()
+        f2 = f1.clone() #Thigh anti-phase joint function 
         f2.scale = 0
 
-        f3 = f1.clone()
-        f3.scale *= -1
+        f3 = f1.clone() #Tibia phase joint function
+        #f3.scale *= -1
 
-        f4 = f2.clone()
-        f3.scale *= -1
+        f4 = f2.clone() #Tibia anti-phase joint function
+        #f3.scale *= -1
 
-        zero = WJFunc()
+        zero = WJFunc() #Default zero phase
         zero.scale = 0
 
-        self.set_func('j_thigh', f1, f2)
+        #Set joints to dedicated phases 
+        self.set_func('j_thigh', f1, f2)    
         self.set_func('j_tibia', f3, f4)
         self.set_func('j_c1', zero, zero)
 
         self.show()
 
     def set_func(self, joint, fp, fa):
+        '''
+        Populate the left/right robot joint phases. I.E Tripod Gait Phases. 2L-1R then 2R-1L Leg Gait.
+        '''
         for leg in ['lf', 'rm', 'lr']:
             j = joint + '_' + leg
             self.pfn[j] = fp
@@ -114,7 +138,10 @@ class WFunc:
     #         self.afn[j+"_r"]=self.pfn[j+"_l"].mirror()
 
     def get(self, phase, x, velocity):
-        """x between 0 and 1"""
+        '''
+        Input: x (scaling factor) between 0 and 1
+        Return: The angle
+        '''
         angles = {}
         for j in self.pfn.keys():
             if phase:
@@ -126,13 +153,16 @@ class WFunc:
         return angles
 
     def show(self):
+        '''
+        Display the current phase/anti-phase information for specific phase
+        '''
         for j in self.pfn.keys():
             print j, 'p', self.pfn[j], 'a', self.afn[j]
 
     def apply_velocity(self, angles, velocity, phase, x):
         pass
 
-        # VX
+        # Horizontal Velocity Vx
         v = velocity[0] * self.parameters['vx_scale']
         d = (x * 2 - 1) * v
         if phase:
@@ -150,7 +180,7 @@ class WFunc:
             angles['j_c1_lm'] -= d
             angles['j_c1_rr'] += d
 
-        # VY
+        # Vertical Velocity Vy
         # v=velocity[1]*self.parameters["vy_scale"]
         # d=(x)*v
         # d2=(1-x)*v
@@ -199,20 +229,20 @@ class WFunc:
 class Walker:
     """Class for making PhantomX walk"""
     def __init__(self, darwin):
-        self.darwin = darwin
-        self.running = False
+        self.darwin = darwin    #name of the robot
+        self.running = False    #controls whether the robot is running or not
 
-        self.velocity = [0, 0, 0]
-        self.walking = False
-        self.func = WFunc()
+        self.velocity = [0, 0, 0]   #cartesian velocities
+        self.walking = False    #variable for if it is walking yet
+        self.func = WFunc()     #the waling gait that the robot will follow
 
         # self.ready_pos=get_walk_angles(10)
-        self.ready_pos = self.func.get(True, 0, [0, 0, 0])
+        self.ready_pos = self.func.get(True, 0, [0, 0, 0])  #starting position
 
-        self._th_walk = None
+        self._th_walk = None    #angle that the robot is walking at
 
         self._sub_cmd_vel = rospy.Subscriber(
-            darwin.ns + "cmd_vel", Twist, self._cb_cmd_vel, queue_size=1)
+            darwin.ns + "cmd_vel", Twist, self._cb_cmd_vel, queue_size=1)   #Subscribe to the robot velocity commands at trigger _cb_cmd_vel callback
 
     def _cb_cmd_vel(self, msg):
         """Catches cmd_vel and update walker speed"""
@@ -221,7 +251,7 @@ class Walker:
         vy = msg.linear.y
         vt = msg.angular.z
         self.start()
-        self.set_velocity(vx, vy, vt)
+        self.set_velocity(vx, vy, vt)  
 
     def init_walk(self):
         """If not there yet, go to initial walk position"""
@@ -233,7 +263,7 @@ class Walker:
         if not self.running:
             self.running = True
             self.init_walk()
-            self._th_walk = Thread(target=self._do_walk)
+            self._th_walk = Thread(target=self._do_walk)    #start a thread to handle the walking
             self._th_walk.start()
             self.walking = True
 
@@ -259,12 +289,12 @@ class Walker:
         func = self.func
 
         # Global walk loop
-        n = 50
-        p = True
-        i = 0
+        n = 50  #number of waypoints
+        p = True    #Check if at position
+        i = 0   
         self.current_velocity = [0, 0, 0]
         while (not rospy.is_shutdown() and
-               (self.walking or i < n or self.is_walking())):
+               (self.walking or i < n or self.is_walking())):   #loop through waypoints
             if not self.walking:
                 self.velocity = [0, 0, 0]
             if not self.is_walking() and i == 0:
@@ -272,10 +302,10 @@ class Walker:
                 self.update_velocity(self.velocity, n)
                 r.sleep()
                 continue
-            x = float(i) / n
-            angles = func.get(p, x, self.current_velocity)
+            x = float(i) / n    #Percent complete with waypoint trajectory
+            angles = func.get(p, x, self.current_velocity)  #apply velocity and update target angle
             self.update_velocity(self.velocity, n)
-            self.darwin.set_angles(angles)
+            self.darwin.set_angles(angles)  #set specific angle to travel to
             i += 1
             if i > n:
                 i = 0
@@ -286,6 +316,9 @@ class Walker:
         self._th_walk = None
 
     def is_walking(self):
+        '''
+        Check if the robot is moving
+        '''
         e = 0.02
         for v in self.current_velocity:
             if abs(v) > e:
