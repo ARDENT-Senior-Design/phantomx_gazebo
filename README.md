@@ -13,6 +13,13 @@ Clone in your catkin workspace and catkin_make it.
 Make sure you also have the following packages in your workspace
 * phantomx_description: https://github.com/ARDENT-Senior-Design/phantomx_description
 * phantomx_control: https://github.com/ARDENT-Senior-Design/phantomx_control
+## Setup Executables 
+
+In order to make the python scripts that run the robot operate as proper ROS nodes, they need to become executables. Go to the /phantomx_gazebo/scripts directory and run the following commands:
+
+    chmod +x walker_demo.py
+    chmod +x lidar_sweep_node.py
+    chmod +x walker.py
     
 ## Usage
 
