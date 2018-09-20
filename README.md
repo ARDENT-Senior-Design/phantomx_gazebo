@@ -101,7 +101,7 @@ phantomx.set_walk_velocity(0,0,0) # Stop
 
 The following ROS packages have to be installed:
 * gazebo_ros_control
-* joint_state_controller
+* ros_control
 * libgazebo_ros_laser 
 
 ## Troubleshooting
